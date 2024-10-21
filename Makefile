@@ -1,10 +1,18 @@
-time: main.o ipc.o time.o
-	$(CC) -o $@ $?
+CC = gcc
+CFLAGS = -Wall
+LDFLAGS = -lrt
 
-main.o: main.c
-	$(CC) -c $?
-ipc.o: ipc.c
-	$(CC) -c $?
+# Source files
+SRC = main.c ipc.c time.c
+OBJ = $(SRC:.c=.o)
 
-time.o: time.c 
-	$(CC) -c $?
+# Target executable
+TARGET = time
+
+# Build target
+$(TARGET): $(OBJ)
+	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS)
+
+# Clean target
+clean:
+	rm -f $(OBJ) $(TARGET)
