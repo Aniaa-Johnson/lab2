@@ -1,40 +1,31 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
-#include <sys/stat.h>        
-#include <fcntl.h>
-#include <unistd.h>
+#include <fcntl.h> 
+#include <sys/stat.h>
+#include "lab2.h"
 
-
-/**************************************************************
- *  ipc_create - creates a shared memory object called lab2 and
- *               returns a char pointer to the memory shared
- *               memory object.
- * 
- *  size - is the size of the memory object to create.
- *   
- ***************************************************************/
-char* ipc_create(int size){
-    /* shared memory file descriptor */
-    int fd;
-    /* pointer to shared memory obect */
-    char* ptr;
-
-    fd = shm_open("lab2", O_CREAT | O_RDWR, 0666);
-
-    // TODO: configure the size of the shared memory object 
-    ftruncate(fd,size);
-
-    // TODO: memory map the shared memory object */
-    ptr =  mmap(0,size,PROT_READ | PROT_WRITE, MAP_SHARED,fd,0);
-
+// Function to create a shared memory object
+void* ipc_create(size_t size) {
+    int shm_fd = shm_open("lab2", O_CREAT | O_RDWR, 0666);
+    if (shm_fd == -1) {
+        perror("Failed to create shared memory");
+        exit(EXIT_FAILURE);
+    }
+    if (ftruncate(shm_fd, size) == -1) {
+        perror("Failed to set size of shared memory");
+        exit(EXIT_FAILURE);
+    }
+    void* ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+    if (ptr == MAP_FAILED) {
+        perror("Failed to map shared memory");
+        exit(EXIT_FAILURE);
+    }
     return ptr;
 }
 
-
-/**************************************************************
- * ipc_close - closes the ipc communication channel that was
- *             created with ipc_create.
- * 
- **************************************************************/
-void ipc_close(){
+// Function to close shared memory
+void ipc_close() {
     shm_unlink("lab2");
 }
