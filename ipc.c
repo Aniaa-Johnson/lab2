@@ -1,31 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>  // Required for ftruncate
 #include <sys/mman.h>
-#include <fcntl.h> 
 #include <sys/stat.h>
+#include <fcntl.h>
 #include "lab2.h"
 
-// Function to create a shared memory object
-void* ipc_create(size_t size) {
-    int shm_fd = shm_open("lab2", O_CREAT | O_RDWR, 0666);
+char* ipc_create(int size) {  // Match the signature in lab2.h
+    // Create a shared memory object called "lab2"
+    int shm_fd = shm_open("/lab2", O_CREAT | O_RDWR, 0666);
     if (shm_fd == -1) {
-        perror("Failed to create shared memory");
-        exit(EXIT_FAILURE);
+        perror("shm_open");
+        return NULL; // Return NULL on error
     }
+
+    // Set the size of the shared memory object
     if (ftruncate(shm_fd, size) == -1) {
-        perror("Failed to set size of shared memory");
-        exit(EXIT_FAILURE);
+        perror("ftruncate");
+        return NULL; // Return NULL on error
     }
-    void* ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+
+    // Map the shared memory object
+    char* ptr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
     if (ptr == MAP_FAILED) {
-        perror("Failed to map shared memory");
-        exit(EXIT_FAILURE);
+        perror("mmap");
+        return NULL; // Return NULL on error
     }
-    return ptr;
+
+    return ptr;  // Return a pointer to the memory map
 }
 
-// Function to close shared memory
 void ipc_close() {
-    shm_unlink("lab2");
+    // Unlink the shared memory object
+    shm_unlink("/lab2");
 }
