@@ -1,6 +1,7 @@
 CC = gcc
 CFLAGS = -Wall
-LDFLAGS = -lrt
+# Remove -lrt since it's not needed on macOS
+LDFLAGS = 
 
 # Source files
 SRC = main.c ipc.c time.c
