@@ -1,3 +1,9 @@
+#ifndef LAB2_H
+#define LAB2_H
+
+#include <stddef.h>
+#include <sys/time.h>
+
 /**************************************************************
  *  ipc_create - creates a shared memory object called lab2 and
  *               returns a char pointer to the memory shared
@@ -6,8 +12,7 @@
  *  size - is the size of the memory object to create.
  *   
  ***************************************************************/
-char* ipc_create(int size);
-
+char* ipc_create(int size); // Keep as is
 
 /****************************************************************
  *  elapsed_time - calculates the elapsed time given a start_time
@@ -35,3 +40,5 @@ double elapsed_time(struct timeval* start_time, struct timeval* end_time);
  * 
  **************************************************************/
 void ipc_close();
+
+#endif // LAB2_H
