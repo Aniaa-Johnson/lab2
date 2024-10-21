@@ -1,88 +1,60 @@
-// TODO: add the appropriate head files here
 #include <stdio.h>
-#include <sys/types.h>
-#include "lab2.h"
-#include <sys/time.h>
-#include <string.h>
 #include <stdlib.h>
-/************************************************************\
- * get_arguments - returns the command line arguments not
- *                 including this file in an array with the
- *                 last element as null.  This is the format
- *                 that the execvp() function requires.
- * 
- * For example:  ./time ls -l
- * will return an array consisting of {"ls","-l", NULL}
- ************************************************************/
-char** get_arguments(int argc, char** argv){
-    int arg_length = argc;
-    char**  cmd_args = NULL;
+#include <string.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include "lab2.h"
 
-    if (arg_length > 0){
-        cmd_args = (char**)malloc(sizeof(char*)*arg_length);
+char** get_arguments(int argc, char** argv) {
+    char** cmd_args = (char**)malloc(sizeof(char*) * argc);
+    if (cmd_args == NULL) {
+        perror("Failed to allocate memory for command arguments");
+        exit(EXIT_FAILURE);
     }
-    for(int i = 0; i < arg_length-1; i++){
-        cmd_args[i] = argv[i+1];
+
+    for (int i = 0; i < argc - 1; i++) {
+        cmd_args[i] = argv[i + 1];
     }
-    cmd_args[arg_length-1] = NULL;
+    cmd_args[argc - 1] = NULL; // Set the last element to NULL
     return cmd_args;
 }
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     pid_t pid;
-    int status;
-    char* command = NULL;
-    char** command_args = NULL;
-    char* ipc_ptr = NULL; // pointer to shared memory
-    struct timeval start_time;
-    struct timeval current_time;
+    struct timeval start_time, current_time;
+    char* ipc_ptr = NULL;
 
-    if (argc < 2){
-        fprintf(stderr,"SYNOPSIS: %s <cmd> <cmd arguments>\n",argv[0]);
+    if (argc < 2) {
+        fprintf(stderr, "SYNOPSIS: %s <cmd> <cmd arguments>\n", argv[0]);
         return 1;
     }
-    
-    // TODO: call ipc_create to create shared memory region to which parent
-    //       child have access.
-    ipc_ptr=  ipc_create(sizeof(start_time));
 
-    /* fork a child process */
+    ipc_ptr = ipc_create(sizeof(start_time));
+
     pid = fork();
-
-    if (pid < 0) { /* error occurred */
-        fprintf(stderr, "Fork failed!");
+    if (pid < 0) {
+        perror("Fork failed");
         return 2;
-    }
-    else if (pid == 0) { /*child process */
-        // TODO: use gettimeofday to log the start time
-        gettimeofday(&start_time,NULL);
+    } else if (pid == 0) {
+        gettimeofday(&start_time, NULL);
+        memcpy(ipc_ptr, &start_time, sizeof(start_time));
         
-
-        // TODO: write the time to the IPC
-        memcpy(ipc_ptr,&start_time,sizeof(start_time));
-        // TODO: get the list of arguments to be used in execvp() and 
-        char** arguments =  get_arguments(argc,argv);
-        // execute execvp()
-        execvp(argv[1],arguments);
+        char** arguments = get_arguments(argc, argv);
+        execvp(argv[1], arguments);
         
-
-    }
-    else { /* parent process */
-        // TODO: have parent wait and get status of child.
-        //       Use the variable status to store status of child. 
-        pid = wait(NULL);
-        // TODO: get the current time using gettimeofday
-        gettimeofday(&current_time,NULL);
-        // TODO: read the start time from IPC
-        memcpy(&start_time,ipc_ptr,sizeof(ipc_ptr));
-        // TODO: close IPC
+        // If execvp fails
+        perror("execvp failed");
+        exit(EXIT_FAILURE);
+    } else {
+        wait(NULL);
+        gettimeofday(&current_time, NULL);
+        memcpy(&start_time, ipc_ptr, sizeof(start_time));
         ipc_close();
 
-        // NOTE: DO NOT ALTER THE LINE BELOW.
-        printf("Elapsed time %.5f\n",elapsed_time(&start_time, &current_time));
+        printf("Elapsed time: %.5f\n", elapsed_time(&start_time, &current_time));
     }
-    
-    return status;
+
+    return 0;
 }
